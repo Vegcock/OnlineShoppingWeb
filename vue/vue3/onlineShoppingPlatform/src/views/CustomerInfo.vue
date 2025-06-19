@@ -1,0 +1,368 @@
+<template>
+  <el-container class="container">
+    <el-header class="header">
+      <div class="header-left">
+        <el-icon :size="25" style="padding: 0 20px; color:#fff">
+          <HomeFilled />
+        </el-icon>
+        <div class="logo">个人中心</div>
+      </div>
+      <div class="header-right">
+        <el-link href="/Main" :underline="false" style="color: #fff; font-size: 16px">
+          返回首页
+        </el-link>
+      </div>
+    </el-header>
+
+    <el-container>
+      <el-aside class="aside">
+        <el-menu
+          :default-active="activeMenu"
+          class="el-menu-vertical-demo"
+          background-color="#f6a6a6"
+          text-color="#fff"
+          active-text-color="#ffd04b"
+          @select="handleMenuSelect"
+        >
+          <el-menu-item index="1">
+            <el-icon><Document /></el-icon>
+            <span>个人信息</span>
+          </el-menu-item>
+          <el-menu-item index="2">
+            <el-icon><Document /></el-icon>
+            <span>我的订单</span>
+          </el-menu-item>
+          <el-menu-item index="3">
+            <el-icon><Document /></el-icon>
+            <span>我的收藏</span>
+          </el-menu-item>
+        </el-menu>
+      </el-aside>
+
+      <el-main class="main">
+        <div v-if="activeMenu === '1'">
+            
+          <div class="info-cards">
+            <el-card class="stat-card" shadow="hover">
+              <template #header><span>🎯 活跃天数</span></template>
+              <div class="stat-value">128 天</div>
+            </el-card>
+            <el-card class="stat-card" shadow="hover">
+              <template #header><span>❤️ 收藏商品</span></template>
+              <div class="stat-value">17 件</div>
+            </el-card>
+            <el-card class="stat-card" shadow="hover">
+              <template #header><span>🛒 历史订单</span></template>
+              <div class="stat-value">45 单</div>
+            </el-card>
+          </div>
+
+            <el-card shadow="hover" class="user-info-card">
+                <template #header>
+                <strong style="font-size: 18px;">👤 个人信息</strong>
+                </template>
+
+                <el-row gutter="20" align="top">
+                <!-- 左边头像列 -->
+                <el-col :span="6" class="avatar-col">
+                    <el-image
+                    style="width: 240px; height: 240px; border-radius: 8px; object-fit: cover;"
+                    :src="user?.url || 'https://via.placeholder.com/120?text=头像'"
+                    fit="cover"
+                    lazy
+                    />
+                    <div class="avatar-icons">
+                    <el-icon><User /></el-icon>
+                    <el-icon><Star /></el-icon>
+                    <el-icon><Location /></el-icon>
+                    </div>
+                </el-col>
+
+                <!-- 右边信息表格列 -->
+                <el-col :span="18">
+                    <el-descriptions
+                    :column="2"
+                    border
+                    direction="vertical"
+                    size="default"
+                    class="info-table"
+                    >
+                    <el-descriptions-item label="姓名">
+                        <div class="value">{{ user?.name || '-' }}</div>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="账号状态">
+                        <el-tag :type="user?.status === '启用' ? 'success' : 'danger'" effect="dark" style="font-weight: bold">
+                        {{ user?.status || '-' }}
+                        </el-tag>
+                    </el-descriptions-item>
+
+                    <el-descriptions-item label="电话">
+                        <div class="value">{{ user?.phone || '-' }}</div>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="邮箱">
+                        <div class="value">{{ user?.email || '-' }}</div>
+                    </el-descriptions-item>
+
+                    <el-descriptions-item label="地区">
+                        <div class="value">{{ user?.place || '-' }}</div>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="地址">
+                        <div class="value">{{ user?.address || '-' }}</div>
+                    </el-descriptions-item>
+
+                    <el-descriptions-item label="VIP 等级">
+                        <el-tag type="warning" effect="dark" style="font-weight: bold;">
+                        {{ user?.vip || '-' }}
+                        </el-tag>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="注册时间">
+                        <div class="value">
+                        {{ user?.create_time ? new Date(user.create_time).toLocaleDateString() : '-' }}
+                        </div>
+                    </el-descriptions-item>
+                    </el-descriptions>
+                </el-col>
+                </el-row>
+            </el-card>
+
+        </div>
+
+        <div v-else-if="activeMenu === '2'">
+          <el-card shadow="hover">
+            <template #header><strong>📦 我的订单</strong></template>
+
+            <div v-if="orders.length > 0">
+              <div class="order-stats">
+                <el-card class="stat-card" shadow="hover">
+                  <div class="stat-title">🧾 总订单数</div>
+                  <div class="stat-value">{{ orders.length }}</div>
+                </el-card>
+                <el-card class="stat-card" shadow="hover">
+                  <div class="stat-title">💰 累计金额</div>
+                  <div class="stat-value">¥ {{ totalAmount.toFixed(2) }}</div>
+                </el-card>
+                <el-card class="stat-card" shadow="hover">
+                  <div class="stat-title">📅 最近一单</div>
+                  <div class="stat-value">{{ latestOrderDate }}</div>
+                </el-card>
+              </div>
+
+              <el-table :data="orders" border style="margin-top: 20px">
+                <el-table-column prop="orderId" label="订单号" width="120" />
+                <el-table-column prop="name" label="商品名称" />
+                <el-table-column prop="totalPrice" label="金额" />
+                <el-table-column prop="status" label="订单状态" />
+                <el-table-column prop="deliveryStatus" label="物流状态" />
+                <el-table-column
+                  prop="createTime"
+                  label="创建时间"
+                  :formatter="formatDate"
+                />
+              </el-table>
+            </div>
+
+            <div v-else>
+              <el-empty description="您还没有订单记录哦~" />
+              <div class="order-hint">
+                <el-card shadow="never">
+                  <p>🎉 赶快去首页看看，选购第一件商品吧！</p>
+                </el-card>
+              </div>
+            </div>
+          </el-card>
+        </div>
+
+      </el-main>
+    </el-container>
+  </el-container>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import { HomeFilled, Document, User, Star, Location } from '@element-plus/icons-vue'
+import axios from 'axios'
+
+interface Customer {
+  user_id: string
+  name: string
+  phone: string
+  email: string
+  address: string
+  place: string
+  vip: string
+  create_time: string
+  status: string
+  url: string
+}
+
+interface Order {
+  orderId: number
+  name: string
+  commodityId: number
+  description: string
+  accounts: number
+  totalPrice: number
+  status: string
+  deliveryStatus: string
+  createTime: string
+}
+
+const activeMenu = ref('1')
+const user = ref<Customer | null>(null)
+const orders = ref<Order[]>([])
+
+const handleMenuSelect = (index: string) => {
+  activeMenu.value = index
+}
+
+const totalAmount = computed(() =>
+  orders.value.reduce((sum, order) => sum + (order.totalPrice || 0), 0)
+)
+
+const latestOrderDate = computed(() => {
+  if (orders.value.length === 0) return '无'
+  const sorted = [...orders.value].sort(
+    (a, b) => new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
+  )
+  return new Date(sorted[0].createTime).toLocaleDateString()
+})
+
+function formatDate(row: Order): string {
+  return new Date(row.createTime).toLocaleString()
+}
+
+onMounted(async () => {
+  try {
+    const userId = localStorage.getItem('userId') || ''
+    console.log(userId)
+
+    // 获取用户信息
+    const userRes = await axios.get(`http://localhost:8080/ct/i/${userId}`);
+    user.value = userRes.data.data
+
+    // 获取订单列表
+    const ordersRes = await axios.get(`http://localhost:8080/uo`, {
+      params: { UserId: userId }
+    })
+    orders.value = ordersRes.data.data || []
+
+  } catch (error) {
+    console.error(error)
+    user.value = {
+      user_id: '',
+      name: '',
+      phone: '',
+      email: '',
+      address: '',
+      place: '',
+      vip: '',
+      create_time: '',
+      status: '',
+      url: ''
+    }
+    orders.value = []
+  }
+})
+
+</script>
+
+<style scoped>
+.container {
+  height: 100vh;
+}
+
+.header {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ff6b6b;
+  color: white;
+  padding: 0 20px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.aside {
+  width: 200px;
+  background-color: #f6a6a6;
+}
+
+.main {
+  padding: 30px;
+  background: #f5f5f5;
+  overflow-y: auto;
+}
+
+.info-cards {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.user-info-card {
+  margin-top: 80px;
+  margin-bottom: 30px;
+}
+
+.avatar-col {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.avatar-icons {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.info-table {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.value {
+  font-weight: bold;
+  font-size: 15px;
+  color: #333;
+}
+
+.order-stats {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.stat-card {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-title {
+  font-size: 16px;
+  color: #999;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #409eff;
+  margin-top: 5px;
+}
+
+.order-hint {
+  margin-top: 20px;
+  text-align: center;
+}
+</style>
