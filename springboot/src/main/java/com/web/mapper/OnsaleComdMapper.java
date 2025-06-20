@@ -13,7 +13,7 @@ public interface OnsaleComdMapper {
     @Delete("delete from onsale where id = #{id}")
     void remove(Integer id);
 
-    @Delete("delete from onsale where com_id = #{id}")
+    @Delete("delete from onsale where comd_id = #{id}")
     void removeByComd(Integer id);
 
     @Update("update onsale set name = #{name},description = #{description},status = #{status},price = #{price},url = #{url} where id = #{id}")
