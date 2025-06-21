@@ -14,16 +14,10 @@
             <div class="user-nav">
                 <el-link :icon="User" href="/Customer" underline="always" type="info" style="font-size: 15px;">{{username}}</el-link>
                 <el-link :icon="ShoppingCart" @click="goToCart" style="font-size: 15px;">购物车</el-link>
-                <el-link :icon="Star" style="font-size: 15px;">收藏</el-link>
                 <el-link :icon="SwitchButton" style="font-size: 15px; color: #FFFFFF;" @click="logout">退出</el-link>
             </div>
         </el-header>
         
-       <!--<el-menu :default-active="activeIndex" class="main-nav" mode="horizontal" :ellipsis="true" @select="handleSelect">
-            <el-menu-item index="1" style="margin-left: 120px;"><a href="#">首页</a></el-menu-item>
-            <el-menu-item index="2"><a href="#">手机</a></el-menu-item>
-            <el-menu-item index="3"><a href="#">电脑</a></el-menu-item>
-         </el-menu> --> 
         <el-main class="main-content" >
             <el-image :src="src" style="width: 85%;margin-bottom: 50px;"/>
             <!-- 商品卡片网格 -->
@@ -90,7 +84,7 @@
 import { ElContainer, ElMessage } from 'element-plus';
 import { ref, computed, onMounted } from 'vue';
 import { Search, ShoppingCart, Star, User, SwitchButton} from '@element-plus/icons-vue'
-import advertisingImg from '@/assets/advertising.png'
+// import advertisingImg from '@/assets/advertising.png'
 import CommodityCard from '@/components/CommodityCard.vue';
 import axios from 'axios'
 import { useRouter } from 'vue-router'
@@ -98,7 +92,7 @@ import Pinyin from 'pinyin-match';
 
 const router = useRouter()
 // const activeIndex = ref('1') 
-const src = advertisingImg
+const src = '/assets/advertising.png'
 const currentPage = ref(1)
 const pageSize = ref(8)
 const totalCommodities = computed(() => commodities.value.length)

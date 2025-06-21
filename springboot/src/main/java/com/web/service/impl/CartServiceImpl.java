@@ -28,6 +28,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public AjaxResult remove(Integer id) {
         cartMapper.remove(id);
+        userCartDao.deleteCartOnly(id);
         return AjaxResult.success();
     }
 

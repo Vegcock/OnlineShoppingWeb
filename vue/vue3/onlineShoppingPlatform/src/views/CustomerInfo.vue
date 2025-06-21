@@ -1,4 +1,25 @@
 <template>
+  <el-dialog v-model="detailDialogVisible" title="订单详情" width="600px">
+    <template v-if="orderDetail">
+      <el-descriptions title="用户信息" :column="2" border>
+        <el-descriptions-item label="姓名">{{ orderDetail.customer.name }}</el-descriptions-item>
+        <el-descriptions-item label="电话">{{ orderDetail.customer.phone }}</el-descriptions-item>
+        <el-descriptions-item label="邮箱">{{ orderDetail.customer.email }}</el-descriptions-item>
+      </el-descriptions>
+
+      <el-descriptions title="订单信息" :column="2" border style="margin-top: 10px;">
+        <el-descriptions-item label="订单号">{{ orderDetail.order.orderId }}</el-descriptions-item>
+        <el-descriptions-item label="状态">{{ orderDetail.order.status }}</el-descriptions-item>
+        <el-descriptions-item label="金额">{{ orderDetail.order.totalPrice }}</el-descriptions-item>
+      </el-descriptions>
+
+      <el-descriptions title="物流信息" :column="2" border style="margin-top: 10px;">
+        <el-descriptions-item label="公司">{{ orderDetail.delivery.company }}</el-descriptions-item>
+        <el-descriptions-item label="状态">{{ orderDetail.delivery.status }}</el-descriptions-item>
+      </el-descriptions>
+    </template>
+  </el-dialog>
+
   <el-container class="container">
     <el-header class="header">
       <div class="header-left">
@@ -8,6 +29,9 @@
         <div class="logo">个人中心</div>
       </div>
       <div class="header-right">
+        <el-link :icon="User" href="/Customer" underline="always" type="info" style="font-size: 15px;">{{username}}</el-link>
+        <el-link :icon="ShoppingCart" style="font-size: 15px;">购物车</el-link>
+        <el-link :icon="SwitchButton" style="font-size: 15px; color: #FFFFFF;" @click="logout">退出</el-link>
         <el-link href="/Main" :underline="false" style="color: #fff; font-size: 16px">
           返回首页
         </el-link>
@@ -149,7 +173,7 @@
 
               <el-table :data="orders" border style="margin-top: 20px">
                 <el-table-column prop="orderId" label="订单号" width="120" />
-                <el-table-column prop="name" label="商品名称" />
+                <el-table-column prop="name" label="收货人" />
                 <el-table-column prop="totalPrice" label="金额" />
                 <el-table-column prop="status" label="订单状态" />
                 <el-table-column prop="deliveryStatus" label="物流状态" />
@@ -158,6 +182,11 @@
                   label="创建时间"
                   :formatter="formatDate"
                 />
+              <el-table-column label="操作" width="100">
+                <template #default="scope">
+                  <el-button size="small" @click="handleViewDetail(scope.row.orderId)">查看</el-button>
+                </template>
+              </el-table-column>
               </el-table>
             </div>
 
@@ -172,6 +201,17 @@
           </el-card>
         </div>
 
+      <div v-else-if="activeMenu === '3'">
+        <div style="padding: 20px">
+          <h2>❤️ 我的收藏</h2>
+          <el-row :gutter="20">
+            <el-col :span="8" v-for="item in favoriteCommodities" :key="item.comdId">
+              <CommodityCard :commodity="item" @add-to-cart="handleAddToCart" />
+            </el-col>
+          </el-row>
+        </div>        
+      </div>
+
       </el-main>
     </el-container>
   </el-container>
@@ -179,8 +219,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { HomeFilled, Document, User, Star, Location } from '@element-plus/icons-vue'
+import { HomeFilled, Document, User, Star, Location, ShoppingCart,SwitchButton } from '@element-plus/icons-vue'
+import CommodityCard from '@/components/CommodityCard.vue'
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 
 interface Customer {
   user_id: string
@@ -207,11 +250,71 @@ interface Order {
   createTime: string
 }
 
+interface Commodity {
+  name: string
+  price: number
+  description: string
+  url: string
+  status: string
+  comdId: number
+}
+
+interface CartItem {
+    name : string
+    commodity : number
+    description : string
+    accounts : number
+    price : number
+}
+
+interface Favorite {
+  id: number
+  userId: string
+  commodityId: number
+  createTime: string
+}
+
+interface Delivery {
+  deliveryId: string
+  orderId: number
+  receiverName: string
+  address: string
+  phone: string
+  company: string
+  shipTime: string
+  status: string
+  statusUpdateTime: string
+  remarks: string
+  posterName: string
+}
+
+interface OrderDetail {
+  order: Order
+  customer: Customer
+  delivery: Delivery
+}
+
 const activeMenu = ref('1')
 const user = ref<Customer | null>(null)
 const orders = ref<Order[]>([])
+const favorites = ref<Favorite[]>([])
+const commodities = ref<Commodity[]>([])
+const detailDialogVisible = ref(false)    
+const orderDetail = ref<OrderDetail>()  // 三表详情
+const username = localStorage.getItem('userName') as string
+
+const handleViewDetail = async (orderId: number) => {
+  try {
+    const res = await axios.get(`http://localhost:8080/order/detail/${orderId}`)
+    orderDetail.value = res.data.data;
+    detailDialogVisible.value = true;
+  } catch (error) {
+    ElMessage.error('获取订单详情失败');
+  }
+};
 
 const handleMenuSelect = (index: string) => {
+  console.log(favoriteCommodities)
   activeMenu.value = index
 }
 
@@ -231,6 +334,38 @@ function formatDate(row: Order): string {
   return new Date(row.createTime).toLocaleString()
 }
 
+const convertCart = (commodity: Commodity) : CartItem  => {
+  return {
+    name: commodity.name,
+    commodity: commodity.comdId,
+    description: commodity.description,
+    accounts: 1,
+    price: commodity.price
+  } 
+}
+
+const handleAddToCart = async (commodity: Commodity) => {
+    const userId = localStorage.getItem('userId') || ''
+    const cartItem = convertCart(commodity)
+    const res = await axios.post('http://localhost:8080/cr', cartItem)
+    const cartId = res.data.data
+
+    const params = new URLSearchParams()
+    params.append('UserId', userId)
+    params.append('CartId', cartId)
+    await axios.post('http://localhost:8080/uc/add', params)
+    ElMessage({
+      message: '添加成功',
+      type: 'success'
+    })
+}
+
+const favoriteCommodities = computed(() => {
+  return favorites.value
+    .map(fav => commodities.value.find(c => c.comdId === fav.commodityId))
+    .filter((c): c is Commodity => c !== undefined)
+})
+
 onMounted(async () => {
   try {
     const userId = localStorage.getItem('userId') || ''
@@ -245,6 +380,16 @@ onMounted(async () => {
       params: { UserId: userId }
     })
     orders.value = ordersRes.data.data || []
+
+    // 获取商品列表
+    const commoditiesRes = await axios.get('http://localhost:8080/ocmd/list');
+    commodities.value = commoditiesRes.data.data || [];
+
+    // 获取收藏列表
+    const res = await axios.get('http://localhost:8080/favorite/list', {
+      params: { userId }
+    })
+    favorites.value = res.data.data
 
   } catch (error) {
     console.error(error)
@@ -263,6 +408,12 @@ onMounted(async () => {
     orders.value = []
   }
 })
+
+const router = useRouter()
+const logout = () => {
+  localStorage.clear()
+  router.push('/login')
+}
 
 </script>
 
@@ -284,6 +435,33 @@ onMounted(async () => {
 .header-left {
   display: flex;
   align-items: center;
+}
+
+.header-right a{
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 20px;
+}
+
+.menu {
+  display: flex;
+  gap: 20px;
+  margin-left: 20px;
+}
+
+.menu-item {
+  cursor: pointer;
+  color: white;
+  font-size: 16px;
+}
+
+.menu-item.active {
+  font-weight: bold;
+}
+
+.user-info {
+  display: flex;
 }
 
 .logo {

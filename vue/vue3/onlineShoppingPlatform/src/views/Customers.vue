@@ -206,7 +206,7 @@
       <el-table-column label="头像 / 用户信息" min-width="200">
         <template #default="{ row }">
           <div>
-            <el-avatar :src="getImageUrl(row.url)" />
+            <el-avatar :src="row.url" />
             <div>
               <div>{{ row.name }}</div>
               <div>ID: {{ row.userId }}</div>
@@ -499,15 +499,6 @@ const pagedUsers = computed(() => {
 
 const handlePageChange = (page: number) => {
   currentPage.value = page
-}
-
-const getImageUrl = (url: string): string => {
-  try {
-    const filename = url.split('/').pop() || ''
-    return new URL(`../assets/${filename}`, import.meta.url).href
-  } catch {
-    return '' 
-  }
 }
 
 const getVipTagType = (vip: string): string => {

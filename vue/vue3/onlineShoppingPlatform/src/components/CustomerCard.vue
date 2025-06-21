@@ -3,7 +3,7 @@
     <div class="card-content">
       <!-- 左侧头像 -->
       <div class="avatar">
-        <el-avatar :size="100" :src="getImageUrl(customer.url)" />
+        <el-avatar :size="100" :src="customer.url" />
       </div>
 
       <!-- 右侧信息 -->
@@ -77,15 +77,6 @@ const getVipType = (vip: string) => {
     case '铂金': return 'success'
     case '钻石': return 'primary'
     default: return 'info'
-  }
-}
-
-const getImageUrl = (url: string): string => {
-  try {
-    const filename = url.split('/').pop() || ''
-    return new URL(`../assets/${filename}`, import.meta.url).href
-  } catch {
-    return '' 
   }
 }
 

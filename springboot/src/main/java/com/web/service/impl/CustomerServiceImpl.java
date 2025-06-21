@@ -1,5 +1,7 @@
 package com.web.service.impl;
 
+import com.web.DAO.UserCartDao;
+import com.web.DAO.UserOrderDao;
 import com.web.entity.AjaxResult;
 import com.web.entity.Customer;
 import com.web.mapper.CustomerMapper;
@@ -12,6 +14,9 @@ import java.util.List;
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
+
+    private UserOrderDao userOrderDao = new UserOrderDao();
+    private UserCartDao userCartDao = new UserCartDao();
 
     @Autowired
     private CustomerMapper customerMapper;
@@ -47,6 +52,8 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public AjaxResult remove(String id) {
         int result = customerMapper.deleteById(id);
+        userCartDao.deleteUserOnly(id);
+        userOrderDao.deleteUserOnly(id);
         return result > 0 ? AjaxResult.success("删除成功") : AjaxResult.error("删除失败");
     }
 

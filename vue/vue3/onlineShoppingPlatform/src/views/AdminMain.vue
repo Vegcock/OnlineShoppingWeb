@@ -46,21 +46,58 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { User, Coin, ShoppingCart, Document } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const router = useRouter()
+const customerQuantity = ref(0)
+const orderQuantity = ref(0)
+const revenue = ref(0)
+const pendingOrders = ref(0)
+
+interface Order {
+  orderId: number
+  name: string
+  commodityId: number | null
+  description: string
+  accounts: number
+  totalPrice: number
+  status: string
+  deliveryStatus: string
+  createTime: string
+}
+
+interface Customer {
+  userId: string;
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  place: string;
+  vip: string;
+  createTime: string;
+  status: string;
+  url: string;
+}
+
+const orderList = ref<Order[]>([])
+const customerList = ref<Customer[]>([])
 
 const go = (path: string) => {
   router.push(path)
 }
 
+const revenueDisplay = computed(() =>
+  `￥${revenue.value.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`
+)
+
 const stats = [
-  { title: '用户总数', value: '8,452', icon: User, color: '#FF6B6B' },
-  { title: '本月订单', value: '12,849', icon: ShoppingCart, color: '#2196F3' },
-  { title: '本月营收', value: '¥856K', icon: Coin, color: '#FFC107' },
-  { title: '待处理订单', value: '219', icon: Document, color: '#4CAF50' },
+  { title: '用户总数', value: customerQuantity, icon: User, color: '#FF6B6B' },
+  { title: '本月订单', value: orderQuantity, icon: ShoppingCart, color: '#2196F3' },
+  { title: '本月营收', value: revenueDisplay , icon: Coin, color: '#FFC107' },
+  { title: '待处理订单', value: pendingOrders, icon: Document, color: '#4CAF50' },
 ]
 
 const notices = ref([
@@ -69,6 +106,17 @@ const notices = ref([
   { text: '请管理员及时审核新注册商户用户', time: '2025-05-25', type: 'warning' },
   { text: '平台将于 6 月 10 日凌晨升级', time: '2025-05-21', type: 'danger' }
 ])
+
+onMounted(async () => {
+  const orderRes = await axios.get('http://localhost:8080/od/list')
+  orderList.value = orderRes.data.data;
+  const customerRes = await axios.get('http://localhost:8080/ct/list')
+  customerList.value = customerRes.data.data;
+  customerQuantity.value = customerList.value.length
+  orderQuantity.value = orderList.value.length
+  revenue.value = orderList.value.reduce((acc, order) => acc + order.totalPrice, 0)
+  pendingOrders.value = orderList.value.filter(order => order.deliveryStatus === '未发货').length
+})
 </script>
 
 <style scoped>

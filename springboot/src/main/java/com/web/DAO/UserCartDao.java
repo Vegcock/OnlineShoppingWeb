@@ -110,6 +110,19 @@ public class UserCartDao {
         }
     }
 
+    public AjaxResult deleteUserOnly(String userId){
+        String sql = "DELETE FROM user_carts WHERE user_id = ?";
+        try (Connection conn = JdbcUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            int rows = pstmt.executeUpdate();
+            return rows > 0 ? AjaxResult.success("删除成功") : AjaxResult.error("删除失败");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return AjaxResult.error("数据库异常: " + e.getMessage());
+        }
+    }
+
     // 更新
     public AjaxResult updateCartRelation(String userId, Integer oldCartId, Integer newCartId) {
         String sql = "UPDATE user_carts SET cart_id = ? WHERE user_id = ? AND cart_id = ?";

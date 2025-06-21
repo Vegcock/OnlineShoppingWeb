@@ -150,25 +150,16 @@
     </div>
 
     <div style="display: flex; gap: 20px;width: 100%;">
-      <el-card style="flex: 1; text-align: center;">
-        <el-icon style="font-size:28px; color:grey"><Clock /></el-icon>
-        <div style="font-weight: bold;font-size: 20px;">128</div>
-        <div style="font-size: 15px;opacity: 60%;">未发货订单</div>
-      </el-card>
-      <el-card style="flex: 1; text-align: center;">
-        <el-icon style="font-size:28px; color:blue"><Van /></el-icon>
-        <div style="font-weight: bold;font-size: 20px;">342</div>
-        <div style="font-size: 15px;opacity: 60%;">运输中订单</div>
-      </el-card>
-      <el-card style="flex: 1; text-align: center;">
-        <el-icon style="font-size:28px; color:green"><Check /></el-icon>
-        <div style="font-weight: bold;font-size: 20px;">1,208</div>
-        <div style="font-size: 15px;opacity: 60%;">已送达订单</div>
-      </el-card>
-      <el-card style="flex: 1; text-align: center;">
-        <el-icon style="font-size:28px; color:red"><Warning /></el-icon>
-        <div style="font-weight: bold;font-size: 20px;">18</div>
-        <div style="font-size: 15px;opacity: 60%;">问题订单</div>
+      <el-card
+        v-for="item in deliveryCards"
+        :key="item.label"
+        style="flex: 1; text-align: center;"
+      >
+        <el-icon :style="{ fontSize: '28px', color: item.color }">
+          <component :is="item.icon" />
+        </el-icon>
+        <div style="font-weight: bold;font-size: 20px;">{{ item.count }}</div>
+        <div style="font-size: 15px;opacity: 60%;">{{ item.label }}</div>
       </el-card>
     </div>
 
@@ -420,6 +411,51 @@ const availableOrders = computed(() => {
   return orderList.value.filter(order => !usedOrderIds.has(order.id));
 });
 
+const deliveryCards = computed(() => [
+  {
+    label: '未发货订单',
+    count: deliveryStats.value['未发货'],
+    icon: Clock,
+    color: 'grey'
+  },
+  {
+    label: '运输中订单',
+    count: deliveryStats.value['配送中'],
+    icon: Van,
+    color: 'blue'
+  },
+  {
+    label: '已送达订单',
+    count: deliveryStats.value['已签收'],
+    icon: Check,
+    color: 'green'
+  },
+  {
+    label: '问题订单',
+    count: deliveryStats.value['问题订单'],
+    icon: Warning,
+    color: 'red'
+  }
+])
+
+type DeliveryStatus = '未发货' | '配送中' | '已签收' | '问题订单'
+const deliveryStats = computed(() => {
+  const stats = {
+    未发货: 0,
+    配送中: 0,
+    已签收: 0,
+    问题订单: 0
+  }
+
+  tableData.value.forEach(d => {
+    const status = d.status as DeliveryStatus
+    if (status in stats) {
+      stats[status]++
+    }
+  })
+
+  return stats
+})
 
 const openCreateDialog = () => {
   dialogVisible.value = true

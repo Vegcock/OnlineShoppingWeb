@@ -1,9 +1,15 @@
 package com.web.service.impl;
 
+import com.web.DAO.UserOrderDao;
+import com.web.Utils.RedisUtil;
 import com.web.entity.AjaxResult;
+import com.web.entity.Commodity;
 import com.web.entity.Order;
+import com.web.mapper.CommodityMapper;
 import com.web.mapper.OrderMapper;
+import com.web.service.CommodityService;
 import com.web.service.OrderService;
+import com.web.service.UserOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +19,44 @@ import java.util.List;
 public class OrderServiceImpl implements OrderService {
 
     @Autowired
+    private RedisUtil redisUtil;
+
+    @Autowired
     private OrderMapper orderMapper;
+
+    @Autowired
+    private CommodityService commodityService;
+
+    @Autowired
+    private CommodityMapper commodityMapper;
+
+    private UserOrderDao userOrderDao = new UserOrderDao();
 
     @Override
     public AjaxResult add(Order order) {
+        Commodity commodity = commodityService.search(order.getCommodityId());
+        if (commodity == null) {
+            return AjaxResult.error("商品不存在");
+        }
+        if (commodity.getAccount() <= 0) {
+            return AjaxResult.error("商品已售罄");
+        }
+        // 扣减库存
+        commodity.setAccount(commodity.getAccount() - 1);
+        commodityMapper.edit(commodity);
+
+        String cacheKey = "commodity:list";
+        if (redisUtil.hasKey(cacheKey)) {
+            List<Commodity> cachedList = (List<Commodity>) redisUtil.get(cacheKey);
+            for (Commodity item : cachedList) {
+                if (item.getId().equals(order.getCommodityId())) {
+                    item.setAccount(item.getAccount() - 1);
+                    break;
+                }
+            }
+            redisUtil.set(cacheKey, cachedList, 600); // 重新缓存 10 分钟
+        }
+
         orderMapper.add(order);
         Integer insertedId = order.getId();
         return AjaxResult.success(insertedId);
@@ -25,6 +65,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public AjaxResult remove(Integer id) {
         orderMapper.remove(id);
+        userOrderDao.deleteOrderOnly(id);
         return AjaxResult.success();
     }
 

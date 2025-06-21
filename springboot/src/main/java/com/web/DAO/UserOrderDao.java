@@ -96,6 +96,32 @@ public class UserOrderDao {
         }
     }
 
+    public AjaxResult deleteOrderOnly(Integer orderId){
+        String sql = "DELETE FROM user_orders WHERE order_id = ?";
+        try (Connection conn = JdbcUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, orderId);
+            int rows = pstmt.executeUpdate();
+            return rows > 0 ? AjaxResult.success("删除成功") : AjaxResult.error("删除失败");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return AjaxResult.error("数据库异常: " + e.getMessage());
+        }
+    }
+
+    public AjaxResult deleteUserOnly(String userId){
+        String sql = "DELETE FROM user_orders WHERE user_id = ?";
+        try (Connection conn = JdbcUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            int rows = pstmt.executeUpdate();
+            return rows > 0 ? AjaxResult.success("删除成功") : AjaxResult.error("删除失败");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return AjaxResult.error("数据库异常: " + e.getMessage());
+        }
+    }
+
     // 更新订单编号
     public AjaxResult updateOrderRelation(String userId, Integer oldOrderId, Integer newOrderId) {
         String sql = "UPDATE user_orders SET order_id = ? WHERE user_id = ? AND order_id = ?";

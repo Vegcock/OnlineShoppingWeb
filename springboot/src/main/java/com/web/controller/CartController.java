@@ -2,8 +2,11 @@ package com.web.controller;
 
 import com.web.entity.AjaxResult;
 import com.web.entity.Cart;
+import com.web.entity.Commodity;
 import com.web.service.CartService;
+import com.web.service.CommodityService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.flyway.FlywayDataSource;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -16,6 +19,9 @@ public class CartController {
 
     @Autowired
     private CartService cartService;
+
+    @Autowired
+    private CommodityService commodityService;
 
     @RequestMapping("/cr/list")
     public AjaxResult list(){

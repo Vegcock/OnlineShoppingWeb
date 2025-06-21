@@ -8,28 +8,28 @@ import java.util.List;
 
 @Mapper
 public interface CustomerMapper {
-    @Select("SELECT * FROM user_info WHERE email = #{email} LIMIT 1")
+    @Select("SELECT * FROM customer WHERE email = #{email} LIMIT 1")
     Customer selectByEmail(@Param("email") String email);
 
-    @Select("SELECT * FROM user_info WHERE phone = #{phone} LIMIT 1")
+    @Select("SELECT * FROM customer WHERE phone = #{phone} LIMIT 1")
     Customer selectByPhone(@Param("phone") String phone);
 
-    @Select("SELECT * FROM user_info WHERE user_id = #{id}")
+    @Select("SELECT * FROM customer WHERE user_id = #{id}")
     Customer selectById(String id);
 
-    @Select("select * from user_info")
+    @Select("select * from customer")
     List<Customer> list();
 
-    @Insert("INSERT INTO user_info(user_id, name, phone, email, address, place, vip, create_time, status, url) " +
+    @Insert("INSERT INTO customer(user_id, name, phone, email, address, place, vip, create_time, status, url) " +
             "VALUES(#{userId}, #{name}, #{phone}, #{email}, #{address}, #{place}, #{vip}, #{createTime}, #{status}, #{url})")
     @Options(useGeneratedKeys = false, keyProperty = "userId") // 禁用自增，因为我们自定义ID
     int insert(Customer customer);
 
     // 2. 根据ID删除用户
-    @Delete("DELETE FROM user_info WHERE user_id = #{userId}")
+    @Delete("DELETE FROM customer WHERE user_id = #{userId}")
     int deleteById(String userId);
 
-    @Update("UPDATE user_info SET " +
+    @Update("UPDATE customer SET " +
             "name = #{name}, " +
             "phone = #{phone}, " +
             "email = #{email}, " +
