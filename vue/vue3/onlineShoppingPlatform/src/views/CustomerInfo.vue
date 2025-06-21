@@ -82,45 +82,70 @@
       <el-main class="main">
         <div v-if="activeMenu === '1'">
             
-          <div class="info-cards">
-            <el-card class="stat-card" shadow="hover">
+        <el-row :gutter="20" class="user-summary-cards">
+          <!-- 🎯 活跃天数 -->
+          <el-col :span="6">
+            <el-card class="user-summary-card" shadow="hover">
               <template #header><span>🎯 活跃天数</span></template>
-              <div class="stat-value">128 天</div>
+              <div class="user-summary-value">{{ activeDays }} 天</div>
             </el-card>
-            <el-card class="stat-card" shadow="hover">
-              <template #header><span>❤️ 收藏商品</span></template>
-              <div class="stat-value">17 件</div>
-            </el-card>
-            <el-card class="stat-card" shadow="hover">
-              <template #header><span>🛒 历史订单</span></template>
-              <div class="stat-value">45 单</div>
-            </el-card>
-          </div>
+          </el-col>
 
-            <el-card shadow="hover" class="user-info-card">
-                <template #header>
+          <!-- 🧾 账号状态 -->
+          <el-col :span="6">
+            <el-card class="user-summary-card" shadow="hover">
+              <template #header><span>🧾 账号状态</span></template>
+              <el-tag :type="user?.status === '已激活' ? 'success' : 'danger'" size="large" effect="dark">
+                {{ user?.status || '-' }}
+              </el-tag>
+            </el-card>
+          </el-col>
+
+          <!-- ⭐️ VIP 等级 -->
+          <el-col :span="6">
+            <el-card class="user-summary-card" shadow="hover">
+              <template #header><span>⭐️ VIP 等级</span></template>
+              <el-tag type="warning" size="large" effect="dark">
+                {{ user?.vip || '普通' }}
+              </el-tag>
+            </el-card>
+          </el-col>
+
+          <!-- 📅 注册时间 -->
+          <el-col :span="6">
+            <el-card class="user-summary-card" shadow="hover">
+              <template #header><span>📅 注册时间</span></template>
+              <div class="user-summary-value">
+                {{ user?.create_time ? new Date(user.create_time).toLocaleDateString() : '-' }}
+              </div>
+            </el-card>
+          </el-col>
+        </el-row>
+
+          <el-card shadow="hover" class="user-info-card">
+              <template #header>
                 <strong style="font-size: 18px;">👤 个人信息</strong>
-                </template>
+              </template>
 
-                <el-row gutter="20" align="top">
-                <!-- 左边头像列 -->
+              <el-row gutter="20" align="top">
+              <!-- 左边头像列 -->
                 <el-col :span="6" class="avatar-col">
-                    <el-image
-                    style="width: 240px; height: 240px; border-radius: 8px; object-fit: cover;"
-                    :src="user?.url || 'https://via.placeholder.com/120?text=头像'"
-                    fit="cover"
-                    lazy
-                    />
-                    <div class="avatar-icons">
-                    <el-icon><User /></el-icon>
-                    <el-icon><Star /></el-icon>
-                    <el-icon><Location /></el-icon>
-                    </div>
+                  <el-image
+                  style="width: 240px; height: 240px; border-radius: 8px; object-fit: cover;"
+                  :src="user?.url || 'https://via.placeholder.com/120?text=头像'"
+                  fit="cover"
+                  lazy
+                  />
+                  <div class="avatar-icons">
+                  <el-icon><User /></el-icon>
+                  <el-icon><Star /></el-icon>
+                  <el-icon><Location /></el-icon>
+                  </div>
                 </el-col>
 
                 <!-- 右边信息表格列 -->
                 <el-col :span="18">
-                    <el-descriptions
+                  <el-descriptions
                     :column="2"
                     border
                     direction="vertical"
@@ -160,11 +185,10 @@
                         {{ user?.create_time ? new Date(user.create_time).toLocaleDateString() : '-' }}
                         </div>
                     </el-descriptions-item>
-                    </el-descriptions>
+                  </el-descriptions>
                 </el-col>
-                </el-row>
-            </el-card>
-
+             </el-row>
+           </el-card>
         </div>
 
         <div v-else-if="activeMenu === '2'">
@@ -257,7 +281,6 @@
             </template>
           </div>
         </div>
-
       </el-main>
     </el-container>
   </el-container>
@@ -367,6 +390,14 @@ const handleMenuSelect = (index: string) => {
 const totalAmount = computed(() =>
   orders.value.reduce((sum, order) => sum + (order.totalPrice || 0), 0)
 )
+
+const activeDays = computed(() => {
+  if (!user.value?.create_time) return 0
+  const createdDate = new Date(user.value.create_time)
+  const now = new Date()
+  const diff = now.getTime() - createdDate.getTime()
+  return Math.floor(diff / (1000 * 60 * 60 * 24)) // 转换为天数
+})
 
 const latestOrderDate = computed(() => {
   if (orders.value.length === 0) return '无'
@@ -588,5 +619,20 @@ const logout = () => {
 .order-hint {
   margin-top: 20px;
   text-align: center;
+}
+
+.user-summary-card {
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  font-weight: bold;
+}
+
+.card-value {
+  font-size: 20px;
+  margin-top: 10px;
+  font-weight: bold;
 }
 </style>

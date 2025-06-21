@@ -16,7 +16,6 @@
 
       <el-divider>或</el-divider>
 
-      <!-- 管理员按钮 -->
       <el-button type="danger" @click="loginAdmin">管理员登录</el-button>
     </el-card>
   </div>

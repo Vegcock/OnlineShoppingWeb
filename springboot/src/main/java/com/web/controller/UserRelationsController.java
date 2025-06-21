@@ -25,7 +25,7 @@ public class UserRelationsController {
     @RequestMapping("/uc")
     public AjaxResult clist(@RequestParam("UserId") String userId) {
         List<Cart> cartList = userCartService.getUserCartByUserId(userId);
-        return AjaxResult.success(cartList);
+        return AjaxResult.success(cartList);    
     }
 
     @RequestMapping("/uc/add")
