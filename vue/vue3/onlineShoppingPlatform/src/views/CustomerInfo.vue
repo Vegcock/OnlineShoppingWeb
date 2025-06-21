@@ -31,7 +31,7 @@
         <template v-else>
           <el-descriptions-item label="公司">未创建物流订单</el-descriptions-item>
           <el-descriptions-item label="状态">未创建物流订单</el-descriptions-item>
-        </template>
+        </template>gouwu
       </el-descriptions>
     </template>
   </el-dialog>
@@ -44,11 +44,13 @@
         </el-icon>
         <div class="logo">个人中心</div>
       </div>
+      <div class="search-box">
+      </div>
       <div class="header-right">
         <el-link :icon="User" href="/Customer" underline="always" type="info" style="font-size: 15px;">{{username}}</el-link>
-        <el-link :icon="ShoppingCart" style="font-size: 15px;">购物车</el-link>
+        <el-link :icon="ShoppingCart" @click="goToCart" style="font-size: 15px;">购物车</el-link>
         <el-link :icon="SwitchButton" style="font-size: 15px; color: #FFFFFF;" @click="logout">退出</el-link>
-        <el-link href="/Main" :underline="false" style="color: #fff; font-size: 16px">
+        <el-link :icon="HomeFilled" href="/Main" :underline="false" style="color: #fff; font-size: 16px">
           返回首页
         </el-link>
       </div>
@@ -122,6 +124,31 @@
           </el-col>
         </el-row>
 
+        <el-dialog v-model="editDialogVisible" title="修改个人信息" width="500px">
+          <el-form :model="editForm" :rules="rules" label-width="80px" ref="editFormRef">
+            <el-form-item label="姓名" prop="name">
+              <el-input v-model="editForm.name" />
+            </el-form-item>
+            <el-form-item label="电话" prop="phone">
+              <el-input v-model="editForm.phone" />
+            </el-form-item>
+            <el-form-item label="邮箱" prop="email">
+              <el-input v-model="editForm.email" />
+            </el-form-item>
+            <el-form-item label="地区" prop="place">
+              <el-input v-model="editForm.place" />
+            </el-form-item>
+            <el-form-item label="地址" prop="address">
+              <el-input v-model="editForm.address" />
+            </el-form-item>
+          </el-form>
+
+          <template #footer>
+            <el-button @click="editDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="submitEdit">保存</el-button>
+          </template>
+        </el-dialog>
+
           <el-card shadow="hover" class="user-info-card">
               <template #header>
                 <strong style="font-size: 18px;">👤 个人信息</strong>
@@ -186,6 +213,7 @@
                         </div>
                     </el-descriptions-item>
                   </el-descriptions>
+                  <el-button size="small" style="margin-top: 10px" @click="openEditDialog">✏️ 修改信息</el-button>
                 </el-col>
              </el-row>
            </el-card>
@@ -287,7 +315,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, reactive } from 'vue'
 import { HomeFilled, Document, User, Star, Location, ShoppingCart,SwitchButton } from '@element-plus/icons-vue'
 import CommodityCard from '@/components/CommodityCard.vue'
 import axios from 'axios'
@@ -371,6 +399,89 @@ const commodities = ref<Commodity[]>([])
 const detailDialogVisible = ref(false)    
 const orderDetail = ref<OrderDetail>()  // 三表详情
 const username = localStorage.getItem('userName') as string
+const id = localStorage.getItem('userId') as string
+const rules = {
+  name: [{ required: true, message: '请输入姓名', trigger: ['blur', 'change'] }],
+  phone: [
+    { required: true, message: '请输入手机号', trigger: ['blur', 'change'] },
+    {
+      validator(rule: any, value: string, callback: (error?: Error) => void) {
+        const phoneRegex = /^\d{11}$/
+        if (!phoneRegex.test(value)) {
+          callback(new Error('手机号必须为11位数字'))
+        } else {
+          callback()
+        }
+      },
+      trigger: ['blur', 'change'],
+    },
+  ],
+  email: [
+    {
+      validator(rule: any, value: string, callback: (error?: Error) => void) {
+        if (value && !value.includes('@')) {
+          callback(new Error('邮箱格式不正确'))
+        } else {
+          callback()
+        }
+      },
+      trigger: ['blur', 'change'],
+    },
+  ],
+}
+
+
+const editDialogVisible = ref(false)
+
+const editForm = reactive({
+  name: '',
+  phone: '',
+  email: '',
+  place: '',
+  address: ''
+})
+
+// 打开弹窗时同步当前用户数据
+const openEditDialog = () => {
+  if (user.value) {
+    editForm.name = user.value.name
+    editForm.phone = user.value.phone
+    editForm.email = user.value.email
+    editForm.place = user.value.place
+    editForm.address = user.value.address
+    editDialogVisible.value = true
+  }
+}
+
+const editFormRef = ref()
+
+const submitEdit = () => {
+  editFormRef.value?.validate(async (valid: boolean) => {
+    if (!valid) {
+      ElMessage.error('请正确填写信息后再提交')
+      return
+    }
+
+    try {
+      const payload = {
+        ...user.value,
+        ...editForm,
+      } as Customer
+
+      const res = await axios.put('http://localhost:8080/ct', payload)
+      if(res.data.code === 200){
+        ElMessage.success('信息修改成功')
+        Object.assign(user.value!, editForm)
+        editDialogVisible.value = false
+      }else{
+        ElMessage.error('修改失败'+res.data.message)  
+      }
+    } catch (error) {
+      ElMessage.error('网络错误')
+    }
+  })
+}
+
 
 const handleViewDetail = async (orderId: number) => {
   try {
@@ -443,6 +554,13 @@ const favoriteCommodities = computed(() => {
     .filter((c): c is Commodity => c !== undefined)
 })
 
+const goToCart = () => {
+  router.push({
+    path: '/Cart',
+    query: { id }
+  });
+}
+
 onMounted(async () => {
   try {
     const userId = localStorage.getItem('userId') || ''
@@ -500,13 +618,18 @@ const logout = () => {
 }
 
 .header {
-  height: 60px;
+  height: 80px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-around;
   background-color: #ff6b6b;
   color: white;
-  padding: 0 20px;
+}
+
+.search-box {
+    display: flex;
+    width: 500px;
+    align-items: center;
 }
 
 .header-left {
@@ -518,7 +641,7 @@ const logout = () => {
     color: white;
     text-decoration: none;
     margin-left: 20px;
-    font-size: 20px;
+    font-size: 28px;
 }
 
 .menu {

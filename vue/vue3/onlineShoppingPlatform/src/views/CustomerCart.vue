@@ -78,9 +78,9 @@
         </el-header>
         <div style="background-color: #FF8E8E;height: 2px;"></div>
         <el-table 
-            :data="tableData" 
+            :data="pagedTableData" 
             class="table" 
-            align 
+            align a
             border 
             stripe 
             size="large"
@@ -118,6 +118,16 @@
                 </template>
             </el-table-column>
          </el-table>
+
+         <el-pagination
+          style="margin: 20px auto; width: fit-content;"
+          background
+          layout="prev, pager, next, jumper"
+          :page-size="pageSize"
+          :current-page="currentPage"
+          :total="total"
+          @current-change="handlePageChange"
+        />
     </el-container>
 </template>
 
@@ -177,6 +187,9 @@ const form = ref(
         payment: '',
     }
 )
+const currentPage = ref(1)
+const pageSize = 5 // 每页显示的条数
+const total = ref(0)
 
 interface Cart {
   id: number;               // 来自 CartItem
@@ -198,6 +211,16 @@ const payDialogVisible = ref(false);
 const createdOrderIds = ref<number[]>([]); 
 
 const tableData = ref<Cart[]>([]);
+
+const pagedTableData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  const end = start + pageSize
+  return tableData.value.slice(start, end)
+})
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page
+}
 
 const queryList = async () => {
   try {
@@ -234,6 +257,7 @@ const queryList = async () => {
         }
       })
     );
+    total.value = cartWithStatus.length
 
     tableData.value = cartWithStatus;
     resetForm();
