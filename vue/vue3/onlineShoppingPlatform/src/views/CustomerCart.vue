@@ -86,10 +86,9 @@
             size="large"
             show-summary
             :summary-method="getSummaries"
-            :row-class-name="getRowClass"
             @selection-change="handleSelectionChange"
         >
-            <el-table-column type="selection" width="65" />
+            <el-table-column type="selection" :selectable="isRowSelectable" :row-class-name="getRowClass" width="65" />
             <el-table-column prop="name" label="商品名称" width="302" />
             <el-table-column prop="description" label="商品描述" width="322" />
             <el-table-column prop="price" label="单价(元)" width="120" >
@@ -168,7 +167,6 @@ const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
 const route = useRoute()
 const router = useRouter()
-// const activeIndex = ref('1') 
 const currentStep = ref(0) 
 const id = route.query.id;
 const form = ref(
@@ -215,7 +213,7 @@ const queryList = async () => {
           const res = await axios.get(`http://localhost:8080/cmd/${item.commodity}`);
           const commodity = res.data.data;
 
-          const isAvailable = commodity.accounts > 0 && commodity.status === '上架';
+          const isAvailable = commodity.account > 0 && commodity.status === '上架';
 
           return {
             ...item,
@@ -294,6 +292,10 @@ const handleSelectionChange = (val: Cart[]) => {
 
 const getRowClass = (row: { row: Cart }) => {
   return row.row.status === '不可购买' ? 'row-disabled' : ''
+}
+
+const isRowSelectable = (row: Cart) => {  
+  return row.status === '可购买'
 }
 
 const getSummaries = (param: SummaryMethodProps) => {
@@ -610,6 +612,7 @@ onMounted(() => {
   background-color: #f5f5f5 !important;
   pointer-events: none;
   opacity: 0.6;
+  text-decoration: line-through;
 }
 
 </style>

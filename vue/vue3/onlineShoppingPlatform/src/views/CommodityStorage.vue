@@ -34,7 +34,7 @@
         </el-form-item>
 
         <el-form-item label="简介">
-          <el-input v-model="form.description" placeholder="输入商品价格"/>
+          <el-input v-model="form.description" placeholder="简单描述商品"/>
         </el-form-item>
 
         <el-form-item label="状态" prop="status">
@@ -212,7 +212,7 @@ const form = reactive({
   description: '',
   status: '',
   account: 0,
-  price: 0
+  price: 0  
 })
 
 const resetForm = () => {
@@ -339,6 +339,7 @@ const handleAdd = () => {
       queryList()
     })
     .catch(error => {
+      console.log(error)
       ElMessage.error(`添加失败: ${error.message}`)
     })
 }

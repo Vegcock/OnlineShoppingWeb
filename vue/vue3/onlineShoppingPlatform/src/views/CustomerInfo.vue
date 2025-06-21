@@ -13,9 +13,25 @@
         <el-descriptions-item label="金额">{{ orderDetail.order.totalPrice }}</el-descriptions-item>
       </el-descriptions>
 
-      <el-descriptions title="物流信息" :column="2" border style="margin-top: 10px;">
-        <el-descriptions-item label="公司">{{ orderDetail.delivery.company }}</el-descriptions-item>
-        <el-descriptions-item label="状态">{{ orderDetail.delivery.status }}</el-descriptions-item>
+      <el-descriptions
+        title="物流信息"
+        :column="2"
+        border
+        style="margin-top: 10px;"
+      >
+        <template v-if="orderDetail.delivery">
+          <el-descriptions-item label="公司">
+            {{ orderDetail.delivery.company }}
+          </el-descriptions-item>
+          <el-descriptions-item label="状态">
+            {{ orderDetail.delivery.status }}
+          </el-descriptions-item>
+        </template>
+
+        <template v-else>
+          <el-descriptions-item label="公司">未创建物流订单</el-descriptions-item>
+          <el-descriptions-item label="状态">未创建物流订单</el-descriptions-item>
+        </template>
       </el-descriptions>
     </template>
   </el-dialog>
@@ -115,7 +131,7 @@
                         <div class="value">{{ user?.name || '-' }}</div>
                     </el-descriptions-item>
                     <el-descriptions-item label="账号状态">
-                        <el-tag :type="user?.status === '启用' ? 'success' : 'danger'" effect="dark" style="font-weight: bold">
+                        <el-tag :type="user?.status === '已激活' ? 'success' : 'danger'" effect="dark" style="font-weight: bold">
                         {{ user?.status || '-' }}
                         </el-tag>
                     </el-descriptions-item>
@@ -201,16 +217,46 @@
           </el-card>
         </div>
 
-      <div v-else-if="activeMenu === '3'">
-        <div style="padding: 20px">
-          <h2>❤️ 我的收藏</h2>
-          <el-row :gutter="20">
-            <el-col :span="8" v-for="item in favoriteCommodities" :key="item.comdId">
-              <CommodityCard :commodity="item" @add-to-cart="handleAddToCart" />
-            </el-col>
-          </el-row>
-        </div>        
-      </div>
+        <!-- 收藏页面部分 -->
+        <div v-else-if="activeMenu === '3'">
+          <div style="padding: 40px 20px">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <el-icon color="#F56C6C" size="28"><Star /></el-icon>
+              <h2 style="margin-top: 10px; font-weight: bold; color: #333;">❤️ 我的收藏</h2>
+              <p style="color: #999;">收藏你喜欢的商品，随时查看～</p>
+            </div>
+
+            <template v-if="favoriteCommodities.length > 0">
+              <el-row :gutter="24">
+                <el-col
+                  v-for="item in favoriteCommodities"
+                  :key="item.comdId"
+                  :xs="24"
+                  :sm="12"
+                  :md="8"
+                >
+                  <div style="padding: 10px;">
+                    <el-card shadow="hover" style="border-radius: 12px;">
+                      <CommodityCard :commodity="item" @add-to-cart="handleAddToCart" />
+                    </el-card>
+                  </div>
+                </el-col>
+              </el-row>
+            </template>
+
+            <!-- 空状态展示 -->
+            <template v-else>
+              <div style="text-align: center; color: #999; padding: 60px 20px;">
+                <el-image
+                  src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png"
+                  style="width: 120px; height: 120px; margin-bottom: 20px;"
+                  fit="contain"
+                />
+                <p style="font-size: 16px;">你还没有收藏任何商品呢～</p>
+              </div>
+            </template>
+          </div>
+        </div>
 
       </el-main>
     </el-container>
