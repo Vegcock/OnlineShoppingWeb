@@ -155,7 +155,7 @@
               <component :is="stat.icon" />
             </el-icon>
             <div>
-              <div>{{ stat.value }}</div>
+              <div style="font-weight: bold;">{{ stat.value }}</div>
               <div>{{ stat.title }}</div>
             </div>
           </div>
@@ -267,7 +267,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, toRaw } from 'vue'
-import { User, Check, ShoppingCart, Coin, Files} from '@element-plus/icons-vue'
+import { User, Star, Warning, Clock, Files} from '@element-plus/icons-vue'
 import axios from 'axios'
 import CustomerCard from '@/components/CustomerCard.vue'
 import { computed } from 'vue'
@@ -292,12 +292,19 @@ const dialogVisible = ref(false)
 const users = ref<UserT[]>([])
 const currentPage = ref(1)
 const pageSize = 5
-const stats = [
-  { title: '总用户数', value: '8,452', icon: User, color: '#FF6B6B' },
-  { title: '活跃用户', value: '7,201', icon: Check, color: '#4CAF50' },
-  { title: '本月订单', value: '12,849', icon: ShoppingCart, color: '#2196F3' },
-  { title: '本月营收', value: '¥856K', icon: Coin, color: '#FFC107' },
-]
+
+const totalUsers = ref(0)
+const vipUsers = ref(0)
+const bannedUsers = ref(0)
+const newUsersThisMonth = ref(0)
+
+const stats = ref([
+  { title: '总用户数', value: totalUsers, icon: User, color: '#42A5F5' },
+  { title: 'VIP 用户', value: vipUsers, icon: Star, color: '#FFD700' },
+  { title: '已禁用用户', value: bannedUsers, icon: Warning, color: '#EF5350' },
+  { title: '本月新增', value: newUsersThisMonth, icon: Clock, color: '#26A69A' }
+])
+
 const addDialogVisible = ref(false)
 const editDialogVisible = ref(false)
 const selectedUsers = ref<UserT[]>([])
@@ -453,6 +460,19 @@ const queryUsers = async () => {
   try {
     const response = await axios.get('http://localhost:8080/ct/list')  
     users.value = response.data.data
+
+    totalUsers.value = users.value.length
+    vipUsers.value = users.value.filter(u => u.vip === '白银' || u.vip === '黄金' || u.vip === '普通' || u.vip === '钻石').length
+    bannedUsers.value = users.value.filter(u => u.status === '封禁').length
+
+    const now = new Date()
+    const currentMonth = now.getMonth()
+    const currentYear = now.getFullYear()
+
+    newUsersThisMonth.value = users.value.filter(u => {
+      const created = new Date(u.createTime)
+      return created.getFullYear() === currentYear && created.getMonth() === currentMonth
+    }).length
   } catch (error) {
     console.error(error)
   }

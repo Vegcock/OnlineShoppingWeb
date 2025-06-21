@@ -8,8 +8,8 @@
               <component :is="card.icon" />
             </el-icon>
             <div>
-              <div >{{ card.value }}</div>
-              <div >{{ card.title }}</div>
+              <div style="font-weight: bold;">{{ card.value }}</div>
+              <div style="color: gray;">{{ card.title }}</div>
             </div>
           </div>
         </el-card>
@@ -114,7 +114,8 @@ onMounted(async () => {
   customerList.value = customerRes.data.data;
   customerQuantity.value = customerList.value.length
   orderQuantity.value = orderList.value.length
-  revenue.value = orderList.value.reduce((acc, order) => acc + order.totalPrice, 0)
+  const paidOrderList = orderList.value.filter(order => order.status === '已付款')
+  revenue.value = paidOrderList.reduce((acc, order) => acc + order.totalPrice*order.accounts, 0)
   pendingOrders.value = orderList.value.filter(order => order.deliveryStatus === '未发货').length
 })
 </script>

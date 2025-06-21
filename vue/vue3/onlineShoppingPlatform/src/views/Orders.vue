@@ -1,6 +1,25 @@
 <template>
+
+
   <div class="order-manager">
     <h2 class="title">订单管理</h2>
+
+  <!-- 仪表卡片区域 -->
+  <div class="dashboard" style="margin-bottom: 20px;">
+    <el-row :gutter="20">
+      <el-col :span="6" v-for="card in dashboardCards" :key="card.title">
+        <el-card shadow="hover" style="text-align: center;">
+          <el-icon :style="{ fontSize: '26px', color: card.color }">
+            <component :is="card.icon" />
+          </el-icon>
+          <div style="font-weight: bold; font-size: 20px; margin: 8px 0;">
+            {{ card.value }}
+          </div>
+          <div style="color: #888;">{{ card.title }}</div>
+        </el-card>
+      </el-col>
+    </el-row>
+  </div>
 
     <div class="toolbar">
       <el-button type="primary" @click="openCreateDialog">新增订单</el-button>
@@ -141,6 +160,40 @@ import axios from 'axios'
 import PinyinMatch from 'pinyin-match'
 import OpenAI from "openai";
 import { ElMessage } from 'element-plus'
+import { Coin, Clock, Van, List } from '@element-plus/icons-vue'
+
+const dashboardCards = computed(() => {
+  const paidOrders = orders.value.filter(order => order.status === '已付款')
+  const unpaidDelivered = paidOrders.filter(order => order.deliveryStatus === '未发货')
+  const latest = [...orders.value].sort((a, b) => new Date(b.createTime).getTime() - new Date(a.createTime).getTime())[0]
+
+  return [
+    {
+      title: '本月营收',
+      value: `￥${paidOrders.reduce((acc, o) => acc + o.totalPrice*o.accounts, 0).toFixed(2)}`,
+      icon: Coin,
+      color: '#FFC107'
+    },
+    {
+      title: '最新订单',
+      value: latest ? `#${latest.orderId}` : '暂无',
+      icon: Clock,
+      color: '#409EFF'
+    },
+    {
+      title: '待发货订单',
+      value: unpaidDelivered.length,
+      icon: Van,
+      color: '#67C23A'
+    },
+    {
+      title: '总订单数',
+      value: orders.value.length,
+      icon: List,
+      color: '#409EFF'
+    }
+  ]
+})
 
 const openai = new OpenAI({
   baseURL: 'https://api.deepseek.com/v1',
@@ -395,6 +448,7 @@ watch(() => editForm.value.accounts, () => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 .title {
+  margin-top: 20px;
   font-size: 20px;
   font-weight: bold;
   margin-bottom: 20px;
