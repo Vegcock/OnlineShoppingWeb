@@ -1,5 +1,6 @@
 package com.web.controller;
 
+import com.web.Utils.RedisUtil;
 import com.web.entity.AjaxResult;
 import com.web.entity.Order;
 import com.web.service.OrderService;
@@ -14,9 +15,20 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
+    @Autowired
+    private RedisUtil redisUtil;
+
     @RequestMapping("/od/list")
     public AjaxResult list(){
+        String cacheKey = "order:list:all";
+
+        if(redisUtil.hasKey(cacheKey)){
+            List<Order> orders = (List<Order>) redisUtil.get(cacheKey);
+            return AjaxResult.success(orders);
+        }
+
         List<Order> orderList = orderService.list();
+        redisUtil.set(cacheKey,orderList,10);
         return AjaxResult.success(orderList);
     }
 

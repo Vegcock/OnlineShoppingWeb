@@ -1,5 +1,6 @@
 package com.web.controller;
 
+import com.web.Utils.RedisUtil;
 import com.web.entity.AjaxResult;
 import com.web.entity.Cart;
 import com.web.entity.Commodity;
@@ -21,11 +22,19 @@ public class CartController {
     private CartService cartService;
 
     @Autowired
-    private CommodityService commodityService;
+    private RedisUtil redisUtil;
 
     @RequestMapping("/cr/list")
     public AjaxResult list(){
+        String cartKey = "cart:list:all";
+
+        if(redisUtil.hasKey(cartKey)){
+            List<Cart> carts = (List<Cart>)redisUtil.get(cartKey);
+            return AjaxResult.success(carts);
+        }
+
         List<Cart> cartList = cartService.list();
+        redisUtil.set(cartKey,cartList,10);
         return AjaxResult.success(cartList);
     }
 

@@ -24,6 +24,7 @@
         <el-button type="primary" icon="UserFilled" @click="go('/admin/Customers')">用户管理</el-button>
         <el-button type="warning" icon="Goods" @click="go('/admin/Storage')">商品管理</el-button>
         <el-button type="success" icon="Document" @click="go('/admin/Orders')">订单管理</el-button>
+        <el-button type="danger" icon="Box" @click="go('/admin/Delivery')">物流管理</el-button>
       </el-space>
     </el-card>
 

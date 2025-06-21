@@ -5,7 +5,7 @@
 
         </div>
         <div class="user-nav">
-            <el-link :icon="User" href="/Customer" underline="hover" type="info" style="font-size: 15px;">管理员</el-link>
+            <el-link :icon="User" href="/admin/Main" underline="hover" type="info" style="font-size: 15px;">管理员</el-link>
             <el-link :icon="Back" href="/Login" underline="hover" type="info" style="font-size: 15px;">退出登录</el-link>
         </div>
     </el-header>

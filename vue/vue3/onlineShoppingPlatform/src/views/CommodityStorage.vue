@@ -118,6 +118,18 @@
         </div>
       </template>
     </el-dialog>
+
+    <el-row :gutter="20" style="margin-bottom: 5px;margin-top: 15px;margin-left: 10px">
+      <el-col :span="6" v-for="stat in stats" :key="stat.title">
+        <el-card shadow="hover" style="text-align: center;">
+          <el-icon :style="{ fontSize: '28px', color: stat.color }">
+            <component :is="stat.icon" />
+          </el-icon>
+          <div style="font-size: 20px; font-weight: bold;">{{ stat.value }}</div>
+          <div style="font-size: 14px; color: gray;">{{ stat.title }}</div>
+        </el-card>
+      </el-col>
+    </el-row>
     
     <el-main>
         <div style="float: right; margin-top: 20px;">
@@ -166,7 +178,7 @@
 
 <script lang="ts" setup>
 import { computed, ref, onMounted, reactive } from 'vue'
-import { Box } from '@element-plus/icons-vue'
+import { Box, GoodsFilled, CircleCheck, CircleClose } from '@element-plus/icons-vue'
 import axios from 'axios'
 import { ElMessageBox, ElMessage } from 'element-plus'
 
@@ -234,6 +246,20 @@ const filterTableData = computed(() =>
       data.name.toLowerCase().includes(search.value.toLowerCase())
   )
 )
+
+const stats = computed(() => {
+  const total = filterTableData.value.length
+  const onSale = filterTableData.value.filter(item => item.status === '上架').length
+  const offSale = filterTableData.value.filter(item => item.status === '下架').length
+  const totalStock = filterTableData.value.reduce((sum, item) => sum + (item.account || 0), 0)
+
+  return [
+    { title: '商品总数', value: total, icon: GoodsFilled, color: '#409EFF' },
+    { title: '库存总量', value: totalStock, icon: Box, color: '#67C23A' },
+    { title: '上架商品', value: onSale, icon: CircleCheck, color: '#13CE66' },
+    { title: '下架商品', value: offSale, icon: CircleClose, color: '#F56C6C' }
+  ]
+})
 
 const pagedData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value

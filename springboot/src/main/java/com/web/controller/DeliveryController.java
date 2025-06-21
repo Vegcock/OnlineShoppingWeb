@@ -1,5 +1,6 @@
 package com.web.controller;
 
+import com.web.Utils.RedisUtil;
 import com.web.entity.AjaxResult;
 import com.web.entity.Delivery;
 import com.web.service.DeliveryService;
@@ -14,9 +15,20 @@ public class DeliveryController {
     @Autowired
     private DeliveryService deliveryService;
 
+    @Autowired
+    private RedisUtil redisUtil;
+
     @RequestMapping("/dr/list")
     public AjaxResult list() {
+        String cacheKey = "delivery:list:all";
+
+        if(redisUtil.hasKey(cacheKey)) {
+            List<Delivery> list = (List<Delivery>) redisUtil.get(cacheKey);
+            return AjaxResult.success(list);
+        }
+
         List<Delivery> deliveries = deliveryService.list();
+        redisUtil.set(cacheKey,deliveries,10);
         return AjaxResult.success(deliveries);
     }
 

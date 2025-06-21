@@ -1,6 +1,8 @@
 package com.web.controller;
 
+import com.web.Utils.RedisUtil;
 import com.web.entity.AjaxResult;
+import com.web.entity.Commodity;
 import com.web.entity.Customer;
 import com.web.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,9 +16,20 @@ public class CustomerController {
     @Autowired
     private CustomerService customerService;
 
+    @Autowired
+    private RedisUtil redisUtil;
+
     @RequestMapping("/ct/list")
     public AjaxResult list(){
+        String cacheKey = "customer:list:all";
+
+        if (redisUtil.hasKey(cacheKey)) {
+            List<Customer> cachedList = (List<Customer>) redisUtil.get(cacheKey);
+            return AjaxResult.success(cachedList);
+        }
+
         List<Customer> customerList = customerService.list();
+        redisUtil.set(cacheKey, customerList, 10); // 缓存10分钟
         return AjaxResult.success(customerList);
     }
 
