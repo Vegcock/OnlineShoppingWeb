@@ -51,7 +51,6 @@
             <div class="user-nav">
                 <el-link :icon="User" href="/Customer" underline="always" type="info" style="font-size: 15px;">{{username}}</el-link>
                 <el-link :icon="ShoppingCart" style="font-size: 15px;">购物车</el-link>
-                <el-link :icon="Star" style="font-size: 15px;">收藏</el-link>
                 <el-link :icon="SwitchButton" style="font-size: 15px; color: #FFFFFF;" @click="logout">退出</el-link>
                 <el-link :icon="HomeFilled" href="/Main" :underline="false" style="color: #FFFFFF; font-size: 16px;"
             >
@@ -87,6 +86,7 @@
             size="large"
             show-summary
             :summary-method="getSummaries"
+            :row-class-name="getRowClass"
             @selection-change="handleSelectionChange"
         >
             <el-table-column type="selection" width="65" />
@@ -113,7 +113,11 @@
                     {{ row.total.toFixed(2) }}
                 </template>
             </el-table-column>
-            <el-table-column label="操作" width="150"></el-table-column>
+            <el-table-column label="操作" width="150">
+                <template #default="{ row }">
+                    <el-button type="danger" size="small" @click="deleteRow(row.id)">删除</el-button>
+                </template>
+            </el-table-column>
          </el-table>
     </el-container>
 </template>
@@ -184,10 +188,10 @@ interface Cart {
   price: number;            // 原始价格（数字类型）
   accounts: number;         // 商品数量（来自 CartItem）
   
-  // 方便表格显示的衍生字段
   priceStr?: string;        // price.toFixed(2) 格式的字符串
   num?: number;             // 映射 accounts，为了兼容现有表格逻辑
   total?: number;           // price * accounts 计算得来
+  status?: string;          // 是否可以购买，来自 Commodity
 }
 
 const selectedRows = ref<Cart[]>([]);
@@ -204,12 +208,36 @@ const queryList = async () => {
 
     const rawData: Cart[] = result.data.data;
 
-    tableData.value = rawData.map(item => ({
-      ...item,
-      priceStr: item.price.toFixed(2),
-      num: item.accounts,
-      total: parseFloat((item.price * item.accounts).toFixed(2))
-    }));
+    // 并行请求商品详情，并组合最终数据
+    const cartWithStatus = await Promise.all(
+      rawData.map(async (item) => {
+        try {
+          const res = await axios.get(`http://localhost:8080/cmd/${item.commodity}`);
+          const commodity = res.data.data;
+
+          const isAvailable = commodity.accounts > 0 && commodity.status === '上架';
+
+          return {
+            ...item,
+            priceStr: item.price.toFixed(2),
+            num: item.accounts,
+            total: parseFloat((item.price * item.accounts).toFixed(2)),
+            status: isAvailable ? '可购买' : '不可购买',
+          };
+        } catch (e) {
+          console.error(`商品 ${item.commodity} 获取失败`, e);
+          return {
+            ...item,
+            priceStr: item.price.toFixed(2),
+            num: item.accounts,
+            total: parseFloat((item.price * item.accounts).toFixed(2)),
+            status: '不可购买',
+          };
+        }
+      })
+    );
+
+    tableData.value = cartWithStatus;
     resetForm();
   } catch (error) {
     console.error('请求失败:', error);
@@ -225,6 +253,36 @@ const logout = () => {
   router.push('/login')
 }
 
+const deleteRow = (id: number) => {
+    ElMessageBox.confirm('确定删除该商品吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    .then(async () => {
+      try {
+        await axios.delete(`http://localhost:8080/cr/ ${id}`);
+        ElMessage({
+          type: 'success',
+          message: '删除成功!',
+        });
+        queryList();
+      } catch (error) {
+        console.error('删除失败:', error);
+        ElMessage({
+          type: 'error',
+          message: '删除失败，请稍后重试。',
+        });
+      }
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '已取消删除',
+      });
+    });
+}
+
 interface SummaryMethodProps<T = Cart> {
   columns: TableColumnCtx<T>[]
   data: T[]
@@ -233,6 +291,10 @@ interface SummaryMethodProps<T = Cart> {
 const handleSelectionChange = (val: Cart[]) => {
   selectedRows.value = val;
 };
+
+const getRowClass = (row: { row: Cart }) => {
+  return row.row.status === '不可购买' ? 'row-disabled' : ''
+}
 
 const getSummaries = (param: SummaryMethodProps) => {
   const { columns } = param
@@ -243,8 +305,8 @@ const getSummaries = (param: SummaryMethodProps) => {
     }
 
     if (index === columns.length - 2) {
-      // 只统计选中的数据
       const total = selectedRows.value.reduce((sum, item) => {
+        if (item.status !== '可购买') return sum
         return sum + (item.price * item.accounts || 0)
       }, 0)
       return h('div', { style: { fontWeight: 'bold' } }, total.toFixed(2))
@@ -268,6 +330,7 @@ const getSummaries = (param: SummaryMethodProps) => {
 
   return sums
 }
+
 
 const resetForm = () => {
   form.value = {
@@ -543,6 +606,10 @@ onMounted(() => {
   width: 80%; /* 可以根据需要设置 */
 }
 
-
+.row-disabled {
+  background-color: #f5f5f5 !important;
+  pointer-events: none;
+  opacity: 0.6;
+}
 
 </style>
