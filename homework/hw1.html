@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>客户管理页面</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f2f2f2; }
+    input[type="text"] { padding: 5px; margin: 5px; width: 200px; }
+    .btn { padding: 5px 10px; margin: 2px; cursor: pointer; }
+    .btn-primary { background-color: #007bff; color: white; border: none; }
+    .btn-danger { background-color: #dc3545; color: white; border: none; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <h2>客户管理系统</h2>
+
+  <!-- 表单部分 -->
+  <div>
+    <input type="text" v-model="form.name" placeholder="姓名">
+    <input type="text" v-model="form.phone" placeholder="电话">
+    <input type="text" v-model="form.email" placeholder="邮箱">
+    <input type="text" v-model="form.address" placeholder="地址">
+    <button class="btn btn-primary" @click="submitForm">{{ isEdit ? '更新' : '添加' }}客户</button>
+    <button v-if="isEdit" class="btn" @click="cancelEdit">取消</button>
+  </div>
+
+  <!-- 客户列表 -->
+  <table>
+    <thead>
+      <tr>
+        <th>编号</th>
+        <th>姓名</th>
+        <th>电话</th>
+        <th>邮箱</th>
+        <th>地址</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="(customer, index) in customers" :key="index">
+        <td>{{ index + 1 }}</td>
+        <td>{{ customer.name }}</td>
+        <td>{{ customer.phone }}</td>
+        <td>{{ customer.email }}</td>
+        <td>{{ customer.address }}</td>
+        <td>
+          <button class="btn btn-primary" @click="editCustomer(index)">编辑</button>
+          <button class="btn btn-danger" @click="deleteCustomer(index)">删除</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  new Vue({
+    el: '#app',
+    data: {
+      customers: [
+        { name: '张三', phone: '13812345678', email: 'zhangsan@example.com', address: '北京' },
+        { name: '李四', phone: '13987654321', email: 'lisi@example.com', address: '上海' }
+      ],
+      form: { name: '', phone: '', email: '', address: '' },
+      editIndex: -1,
+    },
+    computed: {
+      isEdit() {
+        return this.editIndex !== -1;
+      }
+    },
+    methods: {
+      submitForm() {
+        if (!this.form.name || !this.form.phone) {
+          alert('姓名和电话是必填项');
+          return;
+        }
+        if(this.form.phone.length != 11){
+          alert('电话号码必须是11位');
+          return;
+        }
+        if(this.form.email.indexOf('@') == -1){
+          alert('邮箱格式不正确');
+          return;
+        }
+
+        if (this.isEdit) {
+          this.customers.splice(this.editIndex, 1, { ...this.form });
+          this.editIndex = -1;
+        } else {
+          this.customers.push({ ...this.form });
+        }
+
+        this.resetForm();
+      },
+      editCustomer(index) {
+        this.form = { ...this.customers[index] };
+        this.editIndex = index;
+      },
+      deleteCustomer(index) {
+        if (confirm('确定要删除该客户吗？')) {
+          this.customers.splice(index, 1);
+        }
+      },
+      cancelEdit() {
+        this.editIndex = -1;
+        this.resetForm();
+      },
+      resetForm() {
+        this.form = { name: '', phone: '', email: '', address: '' };
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
